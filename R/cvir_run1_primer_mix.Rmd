@@ -1,0 +1,250 @@
+---
+title: "c_virginica_gtseq2_pcr1_loading_maps"
+subtitle: "run_1"
+author: |
+   Texas A&M University-Corpus Christi
+date: "October_2023"
+output:
+    github_document:
+    #html_document:
+      #keep_md: true
+    #md_extensions: +hard_line_breaks
+    #df_print: tibble
+    toc: true
+    toc_depth: 2
+    #self_contained: false
+    #hard_line_breaks: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+library(vcfR)
+library(adegenet)
+library(here)
+library(pantomime)
+library(janitor)
+library(plot.matrix)
+library(R.utils)
+library("readxl")
+```
+
+# Make "loading maps" for making new primer mixes
+
+1) First upload details of which row and column each primer is arranged in the stock plates of primers in the freezer
+
+A COA spreadsheet from IDT used to specify rows and columns of individual primers
+
+```{r}
+coa <- read_csv(here::here("data", "raw", "coa_mhap.csv")) %>%
+  clean_names()
+```
+
+```{r}
+#extract well positions for each primer (forward and reverse were put in same well so no need to distinguish here)
+
+well_pos_plate1 <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE)%>%
+  slice(1:96) %>%
+  select(sequence_name, well_position) %>%
+  mutate(row = substr(well_position,1,1)) %>%
+  mutate(column = substr(well_position,2,4))
+
+well_pos_plate2 <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE)%>%
+  slice((1+96):(97+95)) %>%
+  select(sequence_name, well_position) %>%
+  mutate(row = substr(well_position,1,1)) %>%
+  mutate(column = substr(well_position,2,4))
+
+well_pos_plate3 <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE)%>%
+  slice((1+96+96):(97+96+95)) %>%
+  select(sequence_name, well_position) %>%
+  mutate(row = substr(well_position,1,1)) %>%
+  mutate(column = substr(well_position,2,4))
+
+well_pos_plate4 <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE)%>%
+  slice((1+96+96+96):(97+96+96+95)) %>%
+  select(sequence_name, well_position) %>%
+  mutate(row = substr(well_position,1,1)) %>%
+  mutate(column = substr(well_position,2,4))
+
+well_pos_plate5 <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE)%>%
+  slice((1+96+96+96+96):(890-(97+96+96+95))) %>%
+  select(sequence_name, well_position) %>%
+  mutate(row = substr(well_position,1,1)) %>%
+  mutate(column = substr(well_position,2,4))
+```
+
+Add in a loadings (1ul for all for first run)
+
+```{r}
+new_loadings <- coa %>%
+  mutate(sequence_name = substr(sequence_name,1,nchar(sequence_name)-2)) %>%
+  distinct(sequence_name, .keep_all = TRUE) %>%
+  select(sequence_name) %>%
+  mutate(loading = 1)
+```
+
+
+2) Make dataframes for the loading_maps
+
+Plate 1
+
+```{r}
+plate_1_map <- well_pos_plate1 %>%
+  left_join(new_loadings, by = "sequence_name")
+```
+
+```{r}
+m1 <- matrix(plate_1_map$loading, nrow=8, ncol=12,byrow=TRUE)
+
+rownames(m1)<- c("A","B","C","D","E","F","G","H")
+colnames(m1)<-c(1:12)
+```
+
+```{r}
+tiff("/home/shared/cvir_gtseq2_opt/loading_maps/run1_plate1.tiff", units="in", width=6, height=6, res=300)
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate1")
+
+dev.off()
+```
+
+```{r}
+#look at run1_plate1
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate1")
+
+```
+
+Plate 2
+
+```{r}
+plate_2_map <- well_pos_plate2 %>%
+  left_join(new_loadings, by = "sequence_name")
+```
+
+```{r}
+m1 <- matrix(plate_2_map$loading, nrow=8, ncol=12,byrow=TRUE)
+
+rownames(m1)<- c("A","B","C","D","E","F","G","H")
+colnames(m1)<-c(1:12)
+```
+
+```{r}
+tiff("/home/shared/cvir_gtseq2_opt/loading_maps/run1_plate2.tiff", units="in", width=6, height=6, res=300)
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate2")
+
+dev.off()
+```
+
+```{r}
+#look at run1_plate1
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate2")
+
+```
+
+Plate 3
+
+```{r}
+plate_3_map <- well_pos_plate3 %>%
+  left_join(new_loadings, by = "sequence_name")
+```
+
+```{r}
+m1 <- matrix(plate_3_map$loading, nrow=8, ncol=12,byrow=TRUE)
+
+rownames(m1)<- c("A","B","C","D","E","F","G","H")
+colnames(m1)<-c(1:12)
+```
+
+```{r}
+tiff("/home/shared/cvir_gtseq2_opt/loading_maps/run1_plate3.tiff", units="in", width=6, height=6, res=300)
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate3")
+
+dev.off()
+```
+
+```{r}
+#look at run1_plate1
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate3")
+
+```
+
+Plate 4
+
+```{r}
+plate_4_map <- well_pos_plate4 %>%
+  left_join(new_loadings, by = "sequence_name")
+```
+
+```{r}
+m1 <- matrix(plate_4_map$loading, nrow=8, ncol=12,byrow=TRUE)
+
+rownames(m1)<- c("A","B","C","D","E","F","G","H")
+colnames(m1)<-c(1:12)
+```
+
+```{r}
+tiff("/home/shared/cvir_gtseq2_opt/loading_maps/run1_plate4.tiff", units="in", width=6, height=6, res=300)
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate4")
+
+dev.off()
+```
+
+```{r}
+#look at run1_plate1
+
+plot(m1,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate4")
+
+```
+
+Plate 5
+
+```{r}
+plate_5_map <- well_pos_plate5 %>%
+  left_join(new_loadings, by = "sequence_name")
+```
+
+```{r}
+m2 <- matrix(plate_5_map$loading, nrow=8, ncol=12,byrow=TRUE)
+
+rownames(m2)<- c("A","B","C","D","E","F","G","H")
+colnames(m2)<-c(1:12)
+
+m2[6,2:12] <- NA
+m2[7,1:12] <- NA
+m2[8,1:12] <- NA
+
+```
+
+```{r}
+tiff("/home/shared/cvir_gtseq2_opt/loading_maps/run1_plate5.tiff", units="in", width=6, height=6, res=300)
+
+plot(m2,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate5")
+
+dev.off()
+```
+
+```{r}
+#look at run1_plate5
+
+plot(m2,col=c('lightblue', 'springgreen','yellow'), breaks=c(0.1,1.1,2.1,4),digits=1,text.cell=list(cex=0.5),fmt.cell='%.2f',key=NULL,main="cvir_run1_plate5")
+
+```
+
